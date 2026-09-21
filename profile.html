@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الملف الشخصي - Sky7</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap'); body { font-family: 'Cairo', sans-serif; }</style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <a href="home.html" class="flex items-center gap-2"><img src="https://cdn-icons-png.flaticon.com/128/7978/7978734.png" class="w-10 h-10"><span class="text-2xl font-bold text-sky-600">Sky7</span></a>
+                <div class="hidden md:flex flex-1 max-w-md mx-8">
+                    <div class="relative w-full">
+                        <input type="text" id="searchInput" placeholder="ابحث عن أصدقاء..." class="w-full px-4 py-2 pr-10 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        <svg class="absolute right-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <div id="searchResults" class="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg hidden max-h-64 overflow-y-auto"></div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button class="relative p-2 hover:bg-gray-100 rounded-full"><svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg><span id="notifBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center hidden">0</span></button>
+                    <button onclick="location.href='favorites.html'" class="relative p-2 hover:bg-gray-100 rounded-full"><svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg></button>
+                    <div class="relative">
+                        <button id="userMenuBtn" class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-full"><img id="navAvatar" src="https://via.placeholder.com/40" class="w-8 h-8 rounded-full object-cover"></button>
+                        <div id="userMenu" class="hidden absolute left-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg py-2">
+                            <a href="profile.html" class="block px-4 py-2 hover:bg-gray-100">ملفي الشخصي</a>
+                            <a href="admin.html" id="adminLink" class="hidden block px-4 py-2 hover:bg-gray-100 text-red-600">لوحة التحكم</a>
+                            <hr class="my-2">
+                            <button id="logoutBtn" class="w-full text-right px-4 py-2 hover:bg-gray-100 text-red-600">تسجيل الخروج</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-5xl mx-auto mt-6 px-4 pb-8">
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div class="relative h-64 md:h-80 bg-gradient-to-r from-sky-400 to-purple-500">
+                <img id="coverImage" src="" class="w-full h-full object-cover hidden">
+                <button id="changeCoverBtn" class="absolute bottom-4 left-4 bg-black/50 text-white px-4 py-2 rounded-lg hover:bg-black/70 flex items-center gap-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>تغيير الغلاف</button>
+                <input type="file" id="coverInput" accept="image/*" class="hidden">
+            </div>
+            <div class="relative px-6 pb-6">
+                <div class="absolute -top-16 left-1/2 -translate-x-1/2 md:left-6 md:translate-x-0">
+                    <div class="relative">
+                        <img id="avatarImage" src="https://via.placeholder.com/150" class="w-32 h-32 rounded-full border-4 border-white object-cover shadow-lg">
+                        <button id="changeAvatarBtn" class="absolute bottom-0 left-0 bg-sky-500 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-sky-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg></button>
+                        <input type="file" id="avatarInput" accept="image/*" class="hidden">
+                    </div>
+                </div>
+                <div class="mt-20 md:mt-4 md:mr-36">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <div class="flex items-center gap-2"><h1 id="displayName" class="text-2xl font-bold text-gray-800">اسم المستخدم</h1><img id="verifiedBadge" src="https://cdn-icons-png.flaticon.com/128/10473/10473969.png" class="w-6 h-6 hidden" title="موثق"></div>
+                            <p id="userBio" class="text-gray-500 mt-1">لم تتم إضافة وصف بعد</p>
+                        </div>
+                        <button id="editProfileBtn" class="mt-4 md:mt-0 px-6 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 flex items-center gap-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>تعديل الملف</button>
+                    </div>
+                    <div class="flex items-center gap-6 mt-6 text-sm text-gray-600">
+                        <div class="flex items-center gap-1"><span id="postsCount" class="font-bold text-gray-800">0</span><span>منشورات</span></div>
+                        <div class="flex items-center gap-1"><span id="friendsCount" class="font-bold text-gray-800">0</span><span>أصدقاء</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-6">
+            <div class="bg-white rounded-2xl shadow-sm p-4">
+                <div class="flex border-b"><button class="px-6 py-3 border-b-2 border-sky-500 text-sky-600 font-medium">المنشورات</button><button class="px-6 py-3 text-gray-500 hover:text-gray-700">الصور</button><button class="px-6 py-3 text-gray-500 hover:text-gray-700">الأصدقاء</button></div>
+                <div id="userPosts" class="space-y-4 mt-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="editModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b flex items-center justify-between"><h2 class="text-xl font-bold">تعديل الملف الشخصي</h2><button id="closeModal" class="p-2 hover:bg-gray-100 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button></div>
+            <form id="editForm" class="p-6 space-y-4">
+                <div><label class="block text-sm font-medium text-gray-700 mb-2">اسم المستخدم</label><input type="text" id="editUsername" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-sky-500 outline-none"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-2">الوصف</label><textarea id="editBio" rows="4" maxlength="180" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-sky-500 outline-none" placeholder="اكتب عن نفسك..."></textarea><p class="text-xs text-gray-400 text-left"><span id="bioCount">0</span>/180</p></div>
+                <button type="submit" class="w-full py-3 bg-sky-500 text-white rounded-lg hover:bg-sky-600">حفظ التغييرات</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50"><div class="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent"></div></div>
+
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyDFwusZ60ZdCwNfg__YrMA6Ww25jeBOiDk", authDomain: "vid1-e2c7d.firebaseapp.com", databaseURL: "https://vid1-e2c7d-default-rtdb.firebaseio.com", projectId: "vid1-e2c7d", storageBucket: "vid1-e2c7d.firebasestorage.app", messagingSenderId: "323883326794", appId: "1:323883326794:web:e1254b899aefa6584175b3" };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+        let currentUser = null, userData = null;
+
+        auth.onAuthStateChanged(async (user) => { if (!user) { window.location.href = 'index.html'; return; } currentUser = user; await loadUserData(); await loadUserPosts(); checkAdmin(); });
+
+        async function loadUserData() {
+            const snapshot = await database.ref('users/' + currentUser.uid).once('value');
+            userData = snapshot.val();
+            if (!userData) return;
+            document.getElementById('displayName').textContent = userData.username || 'مستخدم';
+            document.getElementById('userBio').textContent = userData.bio || 'لم تتم إضافة وصف بعد';
+            document.getElementById('postsCount').textContent = userData.postsCount || 0;
+            document.getElementById('friendsCount').textContent = userData.friendsCount || 0;
+            if (userData.avatar) { document.getElementById('avatarImage').src = userData.avatar; document.getElementById('navAvatar').src = userData.avatar; }
+            if (userData.coverImage) { document.getElementById('coverImage').src = userData.coverImage; document.getElementById('coverImage').classList.remove('hidden'); }
+            if (userData.isVerified) document.getElementById('verifiedBadge').classList.remove('hidden');
+            document.getElementById('editUsername').value = userData.username || '';
+            document.getElementById('editBio').value = userData.bio || '';
+            document.getElementById('bioCount').textContent = (userData.bio || '').length;
+        }
+
+        async function loadUserPosts() {
+            const snapshot = await database.ref('posts').orderByChild('userId').equalTo(currentUser.uid).once('value');
+            const posts = [];
+            snapshot.forEach((child) => posts.push({ id: child.key, ...child.val() }));
+            posts.reverse();
+            renderUserPosts(posts);
+        }
+
+        function renderUserPosts(posts) {
+            const container = document.getElementById('userPosts');
+            if (posts.length === 0) { container.innerHTML = '<p class="text-center text-gray-500 py-8">لا توجد منشورات بعد</p>'; return; }
+            container.innerHTML = posts.map(post => `<div class="border rounded-xl p-4"><div class="flex items-center gap-3 mb-3"><img src="${post.userAvatar || 'https://via.placeholder.com/40'}" class="w-10 h-10 rounded-full object-cover"><div class="flex-1"><div class="flex items-center gap-1"><span class="font-semibold">${post.username}</span>${post.isVerified ? '<img src="https://cdn-icons-png.flaticon.com/128/10473/10473969.png" class="w-4 h-4">' : ''}</div><p class="text-xs text-gray-500">منذ وقت</p></div></div><p class="mb-3">${post.caption || ''}</p>${post.imageUrl ? `<img src="${post.imageUrl}" class="w-full rounded-lg mb-3 max-h-96 object-cover">` : ''}</div>`).join('');
+        }
+
+        function checkAdmin() { if (userData && userData.isAdmin) document.getElementById('adminLink').classList.remove('hidden'); }
+
+        document.getElementById('userMenuBtn').addEventListener('click', () => { document.getElementById('userMenu').classList.toggle('hidden'); });
+        document.getElementById('logoutBtn').addEventListener('click', async () => { await auth.signOut(); window.location.href = 'index.html'; });
+        document.getElementById('editProfileBtn').addEventListener('click', () => { document.getElementById('editModal').classList.remove('hidden'); document.getElementById('editModal').classList.add('flex'); });
+        document.getElementById('closeModal').addEventListener('click', () => { document.getElementById('editModal').classList.add('hidden'); document.getElementById('editModal').classList.remove('flex'); });
+        document.getElementById('editBio').addEventListener('input', (e) => { document.getElementById('bioCount').textContent = e.target.value.length; });
+
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('editUsername').value.trim();
+            const bio = document.getElementById('editBio').value.trim();
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+            await database.ref('users/' + currentUser.uid).update({ username, bio });
+            document.getElementById('loadingOverlay').classList.add('hidden');
+            document.getElementById('editModal').classList.add('hidden');
+            document.getElementById('editModal').classList.remove('flex');
+            loadUserData();
+        });
+
+        document.getElementById('changeAvatarBtn').addEventListener('click', () => { document.getElementById('avatarInput').click(); });
+        document.getElementById('avatarInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const base64 = event.target.result;
+                await database.ref('users/' + currentUser.uid).update({ avatar: base64 });
+                document.getElementById('avatarImage').src = base64;
+                document.getElementById('navAvatar').src = base64;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById('changeCoverBtn').addEventListener('click', () => { document.getElementById('coverInput').click(); });
+        document.getElementById('coverInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const base64 = event.target.result;
+                await database.ref('users/' + currentUser.uid).update({ coverImage: base64 });
+                document.getElementById('coverImage').src = base64;
+                document.getElementById('coverImage').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#userMenuBtn') && !e.target.closest('#userMenu')) document.getElementById('userMenu').classList.add('hidden');
+        });
+    </script>
+</body>
+</html>
