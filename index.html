@@ -1,0 +1,331 @@
+1→<!DOCTYPE html>
+
+     2→<html lang="ar" dir="rtl">
+
+     3→<head>
+
+     4→    <meta charset="UTF-8">
+
+     5→    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+     6→    <title>Sky7 - تسجيل الدخول</title>
+
+     7→    <script src="https://cdn.tailwindcss.com"></script>
+
+     8→    <link rel="stylesheet" href="styles.css">
+
+     9→    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+
+    10→    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+    11→    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    12→    <style>
+
+    13→        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+
+    14→        body { font-family: 'Cairo', sans-serif; }
+
+    15→    </style>
+
+    16→</head>
+
+    17→<body class="min-h-screen bg-gradient-to-b from-sky-400 via-sky-500 to-purple-600">
+
+    18→    <!-- Background Decoration -->
+
+    19→    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+
+    20→        <div class="absolute top-20 right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+
+    21→        <div class="absolute bottom-40 left-10 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl"></div>
+
+    22→        <div class="absolute top-1/2 right-1/4 w-48 h-48 bg-sky-300/20 rounded-full blur-2xl"></div>
+
+    23→    </div>
+
+    24→
+
+    25→    <div class="relative min-h-screen flex items-center justify-center p-4">
+
+    26→        <div class="w-full max-w-md">
+
+    27→            <!-- Logo -->
+
+    28→            <div class="text-center mb-8">
+
+    29→                <div class="inline-flex items-center gap-3 mb-4">
+
+    30→                    <img src="https://cdn-icons-png.flaticon.com/128/7978/7978734.png" alt="Sky7" class="w-16 h-16 drop-shadow-lg">
+
+    31→                    <h1 class="text-5xl font-bold text-white drop-shadow-lg">Sky7</h1>
+
+    32→                </div>
+
+    33→                <p class="text-sky-100 text-lg">شارك صور السماء مع العالم</p>
+
+    34→            </div>
+
+    35→
+
+    36→            <!-- Login Card -->
+
+    37→            <div class="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-8">
+
+    38→                <h2 class="text-2xl font-bold text-gray-800 text-center mb-6">تسجيل الدخول</h2>
+
+    39→                
+
+    40→                <form id="loginForm" class="space-y-5">
+
+    41→                    <div>
+
+    42→                        <label class="block text-sm font-medium text-gray-700 mb-2">البريد الإلكتروني</label>
+
+    43→                        <input type="email" id="email" required
+
+    44→                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition-all"
+
+    45→                            placeholder="example@email.com">
+
+    46→                    </div>
+
+    47→                    
+
+    48→                    <div>
+
+    49→                        <label class="block text-sm font-medium text-gray-700 mb-2">كلمة المرور</label>
+
+    50→                        <input type="password" id="password" required
+
+    51→                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition-all"
+
+    52→                            placeholder="••••••••">
+
+    53→                    </div>
+
+    54→
+
+    55→                    <div id="errorMsg" class="hidden text-red-500 text-sm text-center"></div>
+
+    56→
+
+    57→                    <button type="submit" id="loginBtn"
+
+    58→                        class="w-full py-3 bg-gradient-to-r from-sky-500 to-purple-500 text-white font-semibold rounded-xl hover:from-sky-600 hover:to-purple-600 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+
+    59→                        تسجيل الدخول
+
+    60→                    </button>
+
+    61→                </form>
+
+    62→
+
+    63→                <div class="mt-6 text-center">
+
+    64→                    <p class="text-gray-600">ليس لديك حساب؟</p>
+
+    65→                    <a href="registration.html" class="text-sky-600 hover:text-sky-700 font-semibold hover:underline">إنشاء حساب جديد</a>
+
+    66→                </div>
+
+    67→            </div>
+
+    68→
+
+    69→            <!-- Footer -->
+
+    70→            <div class="text-center mt-6 text-white/70 text-sm">
+
+    71→                <p>© 2024 Sky7 - عالم صور السماء</p>
+
+    72→            </div>
+
+    73→        </div>
+
+    74→    </div>
+
+    75→
+
+    76→    <!-- Loading Overlay -->
+
+    77→    <div id="loadingOverlay" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+
+    78→        <div class="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent"></div>
+
+    79→    </div>
+
+    80→
+
+    81→    <script>
+
+    82→        // Firebase Configuration
+
+    83→        const firebaseConfig = {
+
+    84→            apiKey: "AIzaSyDFwusZ60ZdCwNfg__YrMA6Ww25jeBOiDk",
+
+    85→            authDomain: "vid1-e2c7d.firebaseapp.com",
+
+    86→            databaseURL: "https://vid1-e2c7d-default-rtdb.firebaseio.com",
+
+    87→            projectId: "vid1-e2c7d",
+
+    88→            storageBucket: "vid1-e2c7d.firebasestorage.app",
+
+    89→            messagingSenderId: "323883326794",
+
+    90→            appId: "1:323883326794:web:e1254b899aefa6584175b3"
+
+    91→        };
+
+    92→
+
+    93→        firebase.initializeApp(firebaseConfig);
+
+    94→        const auth = firebase.auth();
+
+    95→        const database = firebase.database();
+
+    96→
+
+    97→        // Check if already logged in
+
+    98→        auth.onAuthStateChanged((user) => {
+
+    99→            if (user) {
+
+   100→                checkUserStatus(user.uid);
+
+   101→            }
+
+   102→        });
+
+   103→
+
+   104→        function checkUserStatus(userId) {
+
+   105→            database.ref('users/' + userId).once('value').then((snapshot) => {
+
+   106→                const userData = snapshot.val();
+
+   107→                if (userData && userData.isBlocked) {
+
+   108→                    auth.signOut();
+
+   109→                    window.location.href = 'block.html';
+
+   110→                } else {
+
+   111→                    window.location.href = 'home.html';
+
+   112→                }
+
+   113→            }).catch(() => {
+
+   114→                window.location.href = 'home.html';
+
+   115→            });
+
+   116→        }
+
+   117→
+
+   118→        // Login Form Handler
+
+   119→        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+
+   120→            e.preventDefault();
+
+   121→            const email = document.getElementById('email').value;
+
+   122→            const password = document.getElementById('password').value;
+
+   123→            const errorMsg = document.getElementById('errorMsg');
+
+   124→            const loginBtn = document.getElementById('loginBtn');
+
+   125→            const loadingOverlay = document.getElementById('loadingOverlay');
+
+   126→
+
+   127→            errorMsg.classList.add('hidden');
+
+   128→            loadingOverlay.classList.remove('hidden');
+
+   129→            loginBtn.disabled = true;
+
+   130→
+
+   131→            try {
+
+   132→                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+
+   133→                const userId = userCredential.user.uid;
+
+   134→
+
+   135→                // Check if blocked
+
+   136→                const snapshot = await database.ref('users/' + userId).once('value');
+
+   137→                const userData = snapshot.val();
+
+   138→
+
+   139→                if (userData && userData.isBlocked) {
+
+   140→                    await auth.signOut();
+
+   141→                    errorMsg.textContent = 'حسابك محظور. تواصل مع الإدارة.';
+
+   142→                    errorMsg.classList.remove('hidden');
+
+   143→                } else {
+
+   144→                    window.location.href = 'home.html';
+
+   145→                }
+
+   146→            } catch (error) {
+
+   147→                errorMsg.textContent = getErrorMessage(error.code);
+
+   148→                errorMsg.classList.remove('hidden');
+
+   149→            } finally {
+
+   150→                loadingOverlay.classList.add('hidden');
+
+   151→                loginBtn.disabled = false;
+
+   152→            }
+
+   153→        });
+
+   154→
+
+   155→        function getErrorMessage(code) {
+
+   156→            const messages = {
+
+   157→                'auth/user-not-found': 'البريد الإلكتروني غير مسجل',
+
+   158→                'auth/wrong-password': 'كلمة المرور غير صحيحة',
+
+   159→                'auth/invalid-email': 'البريد الإلكتروني غير صالح',
+
+   160→                'auth/too-many-requests': 'محاولات كثيرة، حاول لاحقاً'
+
+   161→            };
+
+   162→            return messages[code] || 'حدث خطأ، حاول مرة أخرى';
+
+   163→        }
+
+   164→    </script>
+
+   165→</body>
+
+   166→</html>
