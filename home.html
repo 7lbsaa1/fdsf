@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sky7 - الصفحة الرئيسية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        body { font-family: 'Cairo', sans-serif; }
+        .reaction-btn:hover .reaction-menu { display: flex !important; }
+        .reaction-menu { display: none; position: absolute; bottom: 100%; left: 0; background: white; border-radius: 9999px; padding: 4px 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); gap: 8px; animation: popIn 0.2s ease; }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .reaction-icon { font-size: 28px; cursor: pointer; transition: transform 0.2s; }
+        .reaction-icon:hover { transform: scale(1.3); }
+        .post-card { transition: transform 0.2s; }
+        .post-card:hover { transform: translateY(-2px); }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <a href="home.html" class="flex items-center gap-2">
+                    <img src="https://cdn-icons-png.flaticon.com/128/7978/7978734.png" class="w-10 h-10">
+                    <span class="text-2xl font-bold text-sky-600">Sky7</span>
+                </a>
+                <div class="hidden md:flex flex-1 max-w-md mx-8">
+                    <div class="relative w-full">
+                        <input type="text" id="searchInput" placeholder="ابحث عن أصدقاء..." class="w-full px-4 py-2 pr-10 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        <svg class="absolute right-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <div id="searchResults" class="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg hidden max-h-80 overflow-y-auto z-50"></div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="openCreatePost()" class="p-2 hover:bg-gray-100 rounded-full" title="إنشاء منشور">
+                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    </button>
+                    <button onclick="location.href='favorites.html'" class="relative p-2 hover:bg-gray-100 rounded-full" title="المفضلة">
+                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                    </button>
+                    <div class="relative">
+                        <button id="userMenuBtn" class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-full">
+                            <img id="navAvatar" src="https://via.placeholder.com/40" class="w-8 h-8 rounded-full object-cover">
+                        </button>
+                        <div id="userMenu" class="hidden absolute left-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50">
+                            <a href="profile.html" class="block px-4 py-2 hover:bg-gray-100">ملفي الشخصي</a>
+                            <a href="admin.html" id="adminLink" class="hidden block px-4 py-2 hover:bg-gray-100 text-red-600">لوحة التحكم</a>
+                            <hr class="my-2">
+                            <button id="logoutBtn" class="w-full text-right px-4 py-2 hover:bg-gray-100 text-red-600">تسجيل الخروج</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto mt-6 px-4 pb-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="hidden lg:block lg:col-span-3">
+                <div class="bg-white rounded-xl shadow-sm p-4 sticky top-24">
+                    <a href="profile.html" class="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg">
+                        <img id="sidebarAvatar" src="https://via.placeholder.com/40" class="w-12 h-12 rounded-full object-cover">
+                        <span id="sidebarName" class="font-semibold">مستخدم</span>
+                    </a>
+                    <hr class="my-3">
+                    <div id="friendsList" class="space-y-2 max-h-64 overflow-y-auto"><p class="text-sm text-gray-500 text-center py-4">جارٍ تحميل الأصدقاء...</p></div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-6">
+                <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
+                    <div class="flex items-center gap-3">
+                        <img id="createAvatar" src="https://via.placeholder.com/40" class="w-10 h-10 rounded-full object-cover">
+                        <button onclick="openCreatePost()" class="flex-1 text-right px-4 py-3 bg-gray-100 rounded-full hover:bg-gray-200 transition">What's on your sky today?</button>
+                    </div>
+                </div>
+                <div id="postsFeed" class="space-y-6"></div>
+            </div>
+
+            <div class="hidden lg:block lg:col-span-3">
+                <div class="bg-white rounded-xl shadow-sm p-4 sticky top-24">
+                    <h3 class="font-bold text-gray-800 mb-4">اقتراحات</h3>
+                    <div id="suggestionsList" class="space-y-3"><p class="text-sm text-gray-500 text-center py-4">جارٍ التحميل...</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="createPostModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-4 border-b flex items-center justify-between">
+                <h2 class="text-xl font-bold">إنشاء منشور</h2>
+                <button onclick="closeCreatePost()" class="p-2 hover:bg-gray-100 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center gap-3 mb-4">
+                    <img id="postModalAvatar" src="https://via.placeholder.com/40" class="w-10 h-10 rounded-full object-cover">
+                    <span id="postModalName" class="font-semibold">مستخدم</span>
+                </div>
+                <textarea id="postCaption" rows="4" placeholder="اكتب تعليقاً عن صورتك..." class="w-full p-3 border rounded-lg resize-none focus:ring-2 focus:ring-sky-500 outline-none"></textarea>
+                <div id="imagePreviewContainer" class="mt-4 hidden relative">
+                    <img id="imagePreview" class="w-full rounded-lg max-h-64 object-cover">
+                    <button onclick="removeImage()" class="absolute top-2 right-2 bg-black/50 text-white p-1 rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                </div>
+                <div class="mt-4 flex items-center gap-2">
+                    <label class="flex-1 flex items-center justify-center gap-2 p-3 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 transition">
+                        <svg class="w-6 h-6 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <span>إضافة صورة</span>
+                        <input type="file" id="postImage" accept="image/*" class="hidden" onchange="previewImage(event)">
+                    </label>
+                </div>
+                <button onclick="createPost()" id="publishBtn" class="w-full mt-4 py-3 bg-sky-500 text-white rounded-lg hover:bg-sky-600 font-semibold disabled:opacity-50">نشر</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50"><div class="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent"></div></div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDFwusZ60ZdCwNfg__YrMA6Ww25jeBOiDk",
+            authDomain: "vid1-e2c7d.firebaseapp.com",
+            databaseURL: "https://vid1-e2c7d-default-rtdb.firebaseio.com",
+            projectId: "vid1-e2c7d",
+            storageBucket: "vid1-e2c7d.firebasestorage.app",
+            messagingSenderId: "323883326794",
+            appId: "1:323883326794:web:e1254b899aefa6584175b3"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+        let currentUser = null, userData = null, selectedImage = null;
+
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) { window.location.href = 'index.html'; return; }
+            currentUser = user;
+            await loadUserData();
+            loadPosts();
+            loadFriends();
+            loadSuggestions();
+        });
+
+        async function loadUserData() {
+            const snapshot = await database.ref('users/' + currentUser.uid).once('value');
+            userData = snapshot.val();
+            const avatar = userData?.avatar || 'https://via.placeholder.com/40';
+            const name = userData?.username || 'مستخدم';
+            document.getElementById('navAvatar').src = avatar;
+            document.getElementById('sidebarAvatar').src = avatar;
+            document.getElementById('sidebarName').textContent = name;
+            document.getElementById('createAvatar').src = avatar;
+            document.getElementById('postModalAvatar').src = avatar;
+            document.getElementById('postModalName').textContent = name;
+            if (userData?.isAdmin) document.getElementById('adminLink').classList.remove('hidden');
+        }
+
+        async function loadPosts() {
+            const snapshot = await database.ref('posts').orderByChild('createdAt').once('value');
+            const posts = [];
+            snapshot.forEach((child) => posts.push({ id: child.key, ...child.val() }));
+            posts.reverse();
+            renderPosts(posts);
+        }
+
+        function renderPosts(posts) {
+            const container = document.getElementById('postsFeed');
+            if (posts.length === 0) { container.innerHTML = '<div class="bg-white rounded-xl shadow-sm p-8 text-center text-gray-500">لا توجد منشورات بعد. كن أول من ينشر!</div>'; return; }
+            container.innerHTML = posts.map(post => createPostCard(post)).join('');
+        }
+
+        function createPostCard(post) {
+            const reactions = post.reactions || {};
+            const totalReactions = (reactions.like || 0) + (reactions.love || 0) + (reactions.wow || 0);
+            const userReaction = reactions[currentUser.uid];
+            const reactionIcon = userReaction ? getReactionIcon(userReaction) : '';
+            
+            return `
+                <div class="post-card bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="p-4 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <a href="view-profile.html?uid=${post.userId}"><img src="${post.userAvatar || 'https://via.placeholder.com/40'}" class="w-10 h-10 rounded-full object-cover"></a>
+                            <div>
+                                <div class="flex items-center gap-1">
+                                    <a href="view-profile.html?uid=${post.userId}" class="font-semibold hover:underline">${post.username}</a>
+                                    ${post.isVerified ? '<img src="https://cdn-icons-png.flaticon.com/128/10473/10473969.png" class="w-4 h-4">' : ''}
+                                </div>
+                                <p class="text-xs text-gray-500">منذ وقت</p>
+                            </div>
+                        </div>
+                        <button class="p-2 hover:bg-gray-100 rounded-full"><svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg></button>
+                    </div>
+                    <p class="px-4 pb-3">${post.caption || ''}</p>
+                    ${post.imageUrl ? `<img src="${post.imageUrl}" class="w-full max-h-[500px] object-contain bg-gray-100">` : ''}
+                    <div class="px-4 py-2 flex items-center justify-between border-b">
+                        <div class="flex items-center gap-2">
+                            <div class="flex -space-x-1">
+                                ${reactions.like ? '<img src="https://cdn-icons-png.flaticon.com/128/4926/4926585.png" class="w-5 h-5">' : ''}
+                                ${reactions.love ? '<img src="https://cdn-icons-png.flaticon.com/128/10307/10307888.png" class="w-5 h-5">' : ''}
+                                ${reactions.wow ? '<img src="https://cdn-icons-png.flaticon.com/128/17446/17446042.png" class="w-5 h-5">' : ''}
+                            </div>
+                            <span class="text-sm text-gray-500">${totalReactions}</span>
+                        </div>
+                        <span class="text-sm text-gray-500">0 تعليق</span>
+                    </div>
+                    <div class="p-2 flex items-center justify-around">
+                        <button class="reaction-btn relative flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition" onclick="toggleReactions('${post.id}')">
+                            <span id="reactionIcon-${post.id}">${reactionIcon || '❤️'}</span>
+                            <span class="text-sm">إعجاب</span>
+                            <div class="reaction-menu" id="reactionMenu-${post.id}">
+                                <span class="reaction-icon" onclick="event.stopPropagation(); addReaction('${post.id}', 'like')"><img src="https://cdn-icons-png.flaticon.com/128/4926/4926585.png" class="w-8 h-8"></span>
+                                <span class="reaction-icon" onclick="event.stopPropagation(); addReaction('${post.id}', 'love')"><img src="https://cdn-icons-png.flaticon.com/128/10307/10307888.png" class="w-8 h-8"></span>
+                                <span class="reaction-icon" onclick="event.stopPropagation(); addReaction('${post.id}', 'wow')"><img src="https://cdn-icons-png.flaticon.com/128/17446/17446042.png" class="w-8 h-8"></span>
+                            </div>
+                        </button>
+                        <button class="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg><span class="text-sm">تعليق</span></button>
+                        <button onclick="savePost('${post.id}')" class="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg><span class="text-sm">حفظ</span></button>
+                        <button onclick="sharePost('${post.id}')" class="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg><span class="text-sm">مشاركة</span></button>
+                        <button onclick="downloadImage('${post.imageUrl}')" class="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg><span class="text-sm">تحميل</span></button>
+                        <button onclick="reportPost('${post.id}')" class="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition text-red-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getReactionIcon(type) {
+            const icons = { like: '<img src="https://cdn-icons-png.flaticon.com/128/4926/4926585.png" class="w-5 h-5">', love: '<img src="https://cdn-icons-png.flaticon.com/128/10307/10307888.png" class="w-5 h-5">', wow: '<img src="https://cdn-icons-png.flaticon.com/128/17446/17446042.png" class="w-5 h-5">' };
+            return icons[type] || '❤️';
+        }
+
+        function toggleReactions(postId) {
+            const menu = document.getElementById(`reactionMenu-${postId}`);
+            document.querySelectorAll('.reaction-menu').forEach(m => { if (m.id !== `reactionMenu-${postId}`) m.style.display = 'none'; });
+            menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        async function addReaction(postId, type) {
+            const postRef = database.ref('posts/' + postId);
+            const snapshot = await postRef.once('value');
+            const post = snapshot.val();
+            if (!post.reactions) post.reactions = {};
+            if (post.reactions[currentUser.uid]) {
+                const prevType = post.reactions[currentUser.uid];
+                post.reactions[prevType] = Math.max(0, (post.reactions[prevType] || 0) - 1);
+            }
+            if (post.reactions[currentUser.uid] === type) {
+                delete post.reactions[currentUser.uid];
+            } else {
+                post.reactions[currentUser.uid] = type;
+                post.reactions[type] = (post.reactions[type] || 0) + 1;
+            }
+            await postRef.update({ reactions: post.reactions });
+            document.getElementById(`reactionMenu-${postId}`).style.display = 'none';
+            loadPosts();
+        }
+
+        async function savePost(postId) {
+            const savedRef = database.ref('saved/' + currentUser.uid + '/' + postId);
+            const snapshot = await savedRef.once('value');
+            if (snapshot.exists()) { await savedRef.remove(); alert('تم إزالة المنشور من المفضلة'); }
+            else { await savedRef.set(true); alert('تم حفظ المنشور في المفضلة'); }
+        }
+
+        function sharePost(postId) {
+            if (navigator.share) { navigator.share({ title: 'Sky7', text: 'تحقق من هذه الصورة على Sky7!', url: window.location.origin + '/view-post.html?id=' + postId }); }
+            else { alert('تم نسخ الرابط!'); }
+        }
+
+        function downloadImage(url) { if (!url) return; const link = document.createElement('a'); link.href = url; link.download = 'sky7-image.jpg'; link.click(); }
+
+        async function reportPost(postId) {
+            const reason = prompt('ما سبب البلاغ؟');
+            if (!reason) return;
+            await database.ref('reports').push({ reporterId: currentUser.uid, reporterName: userData?.username, postId: postId, reason: reason, status: 'pending', createdAt: Date.now() });
+            alert('تم إرسال البلاغ');
+        }
+
+        async function loadFriends() {
+            const snapshot = await database.ref('users/' + currentUser.uid + '/friends').once('value');
+            const friends = snapshot.val() || {};
+            const friendIds = Object.keys(friends);
+            if (friendIds.length === 0) { document.getElementById('friendsList').innerHTML = '<p class="text-sm text-gray-500 text-center py-4">لا توجد أصدقاء</p>'; return; }
+            let html = '';
+            for (const fid of friendIds.slice(0, 10)) {
+                const fSnapshot = await database.ref('users/' + fid).once('value');
+                const fData = fSnapshot.val();
+                if (fData) { html += `<a href="view-profile.html?uid=${fid}" class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg"><img src="${fData.avatar || 'https://via.placeholder.com/40'}" class="w-8 h-8 rounded-full object-cover"><span class="text-sm">${fData.username}</span></a>`; }
+            }
+            document.getElementById('friendsList').innerHTML = html || '<p class="text-sm text-gray-500 text-center py-4">لا توجد أصدقاء</p>';
+        }
+
+        async function loadSuggestions() {
+            const snapshot = await database.ref('users').once('value');
+            const users = [];
+            snapshot.forEach((child) => { if (child.key !== currentUser.uid) users.push({ id: child.key, ...child.val() }); });
+            const html = users.slice(0, 5).map(u => `<div class="flex items-center gap-2"><img src="${u.avatar || 'https://via.placeholder.com/40'}" class="w-8 h-8 rounded-full object-cover"><div class="flex-1"><p class="text-sm font-medium">${u.username}</p></div><button onclick="addFriend('${u.id}')" class="text-xs px-3 py-1 bg-sky-100 text-sky-600 rounded-full hover:bg-sky-200">إضافة</button></div>`).join('');
+            document.getElementById('suggestionsList').innerHTML = html || '<p class="text-sm text-gray-500">لا توجد اقتراحات</p>';
+        }
+
+        async function addFriend(userId) {
+            await database.ref('users/' + userId + '/friends/' + currentUser.uid).set(true);
+            await database.ref('users/' + currentUser.uid + '/friends/' + userId).set(true);
+            alert('تم إرسال طلب الصداقة');
+            loadSuggestions();
+        }
+
+        let searchTimeout;
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(async () => {
+                const query = e.target.value.trim().toLowerCase();
+                if (query.length < 2) { document.getElementById('searchResults').classList.add('hidden'); return; }
+                const snapshot = await database.ref('users').once('value');
+                const results = [];
+                snapshot.forEach((child) => { const user = child.val(); if (user.username?.toLowerCase().includes(query)) results.push({ id: child.key, ...user }); });
+                const html = results.slice(0, 5).map(u => `<a href="view-profile.html?uid=${u.id}" class="flex items-center gap-3 p-3 hover:bg-gray-50"><img src="${u.avatar || 'https://via.placeholder.com/40'}" class="w-10 h-10 rounded-full object-cover"><div><p class="font-medium">${u.username}</p><p class="text-xs text-gray-500">${u.postsCount || 0} منشور</p></div></a>`).join('');
+                document.getElementById('searchResults').classList.remove('hidden');
+                document.getElementById('searchResults').innerHTML = html || '<p class="p-3 text-gray-500">لا نتائج</p>';
+            }, 300);
+        });
+
+        function openCreatePost() { document.getElementById('createPostModal').classList.remove('hidden'); document.getElementById('createPostModal').classList.add('flex'); }
+        function closeCreatePost() { document.getElementById('createPostModal').classList.add('hidden'); document.getElementById('createPostModal').classList.remove('flex'); selectedImage = null; document.getElementById('imagePreviewContainer').classList.add('hidden'); document.getElementById('postCaption').value = ''; }
+        function previewImage(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { selectedImage = e.target.result; document.getElementById('imagePreview').src = selectedImage; document.getElementById('imagePreviewContainer').classList.remove('hidden'); }; reader.readAsDataURL(file); }
+        function removeImage() { selectedImage = null; document.getElementById('imagePreviewContainer').classList.add('hidden'); document.getElementById('postImage').value = ''; }
+
+        async function createPost() {
+            const caption = document.getElementById('postCaption').value.trim();
+            if (!selectedImage && !caption) { alert('أضف صورة أو كتابة'); return; }
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+            document.getElementById('publishBtn').disabled = true;
+            const newPostRef = database.ref('posts').push();
+            await newPostRef.set({ userId: currentUser.uid, username: userData?.username || 'مستخدم', userAvatar: userData?.avatar || '', imageUrl: selectedImage || '', caption: caption, isVerified: userData?.isVerified || false, reactions: {}, createdAt: Date.now() });
+            await database.ref('users/' + currentUser.uid + '/postsCount').transaction(count => (count || 0) + 1);
+            document.getElementById('loadingOverlay').classList.add('hidden');
+            closeCreatePost();
+            loadPosts();
+        }
+
+        document.getElementById('userMenuBtn').addEventListener('click', () => { document.getElementById('userMenu').classList.toggle('hidden'); });
+        document.getElementById('logoutBtn').addEventListener('click', async () => { await auth.signOut(); window.location.href = 'index.html'; });
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#userMenuBtn') && !e.target.closest('#userMenu')) document.getElementById('userMenu').classList.add('hidden');
+            if (!e.target.closest('.reaction-btn') && !e.target.closest('.reaction-menu')) document.querySelectorAll('.reaction-menu').forEach(m => m.style.display = 'none');
+        });
+    </script>
+</body>
+</html>
