@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - Sky7</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap'); body { font-family: 'Cairo', sans-serif; }</style>
+</head>
+<body class="bg-gray-900 min-h-screen">
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-gray-800 rounded-2xl p-8 w-full max-w-md">
+            <div class="text-center mb-8"><img src="https://cdn-icons-png.flaticon.com/128/7978/7978734.png" class="w-16 h-16 mx-auto mb-4"><h1 class="text-2xl font-bold text-white">لوحة التحكم</h1><p class="text-gray-400">Sky7 Admin</p></div>
+            <form id="adminLoginForm" class="space-y-4">
+                <div><label class="block text-sm text-gray-400 mb-2">البريد الإلكتروني</label><input type="email" id="adminEmail" required class="w-full px-4 py-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-2 focus:ring-sky-500 outline-none" placeholder="admin@sky7.com"></div>
+                <div><label class="block text-sm text-gray-400 mb-2">كلمة المرور</label><input type="password" id="adminPassword" required class="w-full px-4 py-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-2 focus:ring-sky-500 outline-none" placeholder="••••••••"></div>
+                <div id="loginError" class="hidden text-red-400 text-sm text-center"></div>
+                <button type="submit" class="w-full py-3 bg-sky-500 text-white rounded-lg hover:bg-sky-600 font-semibold">دخول</button>
+            </form>
+            <div class="mt-6 text-center"><a href="home.html" class="text-gray-400 hover:text-white text-sm">العودة للرئيسية</a></div>
+        </div>
+    </div>
+
+    <div id="dashboard" class="hidden">
+        <div class="fixed right-0 top-0 h-full w-64 bg-gray-800 p-4">
+            <div class="flex items-center gap-2 mb-8"><img src="https://cdn-icons-png.flaticon.com/128/7978/7978734.png" class="w-10 h-10"><span class="text-xl font-bold text-white">Sky7</span></div>
+            <nav class="space-y-2">
+                <a href="#" onclick="showSection('overview')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700" data-section="overview"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>نظرة عامة</a>
+                <a href="#" onclick="showSection('users')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700" data-section="users"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>المستخدمون</a>
+                <a href="#" onclick="showSection('reports')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700" data-section="reports"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>البلاغات<span id="reportsBadge" class="hidden bg-red-500 text-white text-xs px-2 py-1 rounded-full ml-auto">0</span></a>
+                <a href="#" onclick="showSection('verification')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700" data-section="verification"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>التوثيقات</a>
+            </nav>
+            <div class="absolute bottom-4 right-4 left-4"><button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-400 hover:bg-gray-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>تسجيل الخروج</button></div>
+        </div>
+
+        <div class="mr-64 p-8">
+            <div id="section-overview" class="admin-section">
+                <h1 class="text-2xl font-bold text-white mb-8">نظرة عامة</h1>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-gray-800 rounded-xl p-6"><div class="flex items-center justify-between"><div><p class="text-gray-400">إجمالي المستخدمين</p><p id="totalUsers" class="text-3xl font-bold text-white mt-2">0</p></div><div class="w-12 h-12 bg-sky-500/20 rounded-full flex items-center justify-center"><svg class="w-6 h-6 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div></div></div>
+                    <div class="bg-gray-800 rounded-xl p-6"><div class="flex items-center justify-between"><div><p class="text-gray-400">إجمالي المنشورات</p><p id="totalPosts" class="text-3xl font-bold text-white mt-2">0</p></div><div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center"><svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div></div></div>
+                    <div class="bg-gray-800 rounded-xl p-6"><div class="flex items-center justify-between"><div><p class="text-gray-400">بلاغات معلقة</p><p id="pendingReports" class="text-3xl font-bold text-white mt-2">0</p></div><div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center"><svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></div></div></div>
+                </div>
+            </div>
+
+            <div id="section-users" class="admin-section hidden">
+                <div class="flex items-center justify-between mb-8"><h1 class="text-2xl font-bold text-white">إدارة المستخدمين</h1></div>
+                <div class="bg-gray-800 rounded-xl overflow-hidden"><table class="w-full"><thead class="bg-gray-700"><tr><th class="px-6 py-4 text-right text-sm font-medium text-gray-300">المستخدم</th><th class="px-6 py-4 text-center text-sm font-medium text-gray-300">البريد</th><th class="px-6 py-4 text-center text-sm font-medium text-gray-300">منشورات</th><th class="px-6 py-4 text-center text-sm font-medium text-gray-300">الحالة</th><th class="px-6 py-4 text-center text-sm font-medium text-gray-300">إجراءات</th></tr></thead><tbody id="usersTableBody" class="divide-y divide-gray-700"></tbody></table></div>
+            </div>
+
+            <div id="section-reports" class="admin-section hidden">
+                <div class="flex items-center justify-between mb-8"><h1 class="text-2xl font-bold text-white">البلاغات</h1><select id="reportFilter" onchange="filterReports()" class="px-4 py-2 bg-gray-700 text-white rounded-lg"><option value="pending">معلقة</option><option value="all">الكل</option></select></div>
+                <div id="reportsList" class="space-y-4"></div>
+            </div>
+
+            <div id="section-verification" class="admin-section hidden">
+                <div class="flex items-center justify-between mb-8"><h1 class="text-2xl font-bold text-white">إدارة التوثيقات</h1><input type="text" id="verifySearch" onkeyup="searchUsers()" placeholder="ابحث عن مستخدم..." class="px-4 py-2 bg-gray-700 text-white rounded-lg w-64"></div>
+                <div id="verificationList" class="space-y-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyDFwusZ60ZdCwNfg__YrMA6Ww25jeBOiDk", authDomain: "vid1-e2c7d.firebaseapp.com", databaseURL: "https://vid1-e2c7d-default-rtdb.firebaseio.com", projectId: "vid1-e2c7d", storageBucket: "vid1-e2c7d.firebasestorage.app", messagingSenderId: "323883326794", appId: "1:323883326794:web:e1254b899aefa6584175b3" };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+        let currentAdmin = null, allUsers = [];
+
+        auth.onAuthStateChanged(async (user) => { if (user) { const snapshot = await database.ref('users/' + user.uid).once('value'); const userData = snapshot.val(); if (userData?.isAdmin) { currentAdmin = user; showDashboard(); loadOverview(); } } });
+
+        document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+            const errorMsg = document.getElementById('loginError');
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const snapshot = await database.ref('users/' + userCredential.user.uid).once('value');
+                const userData = snapshot.val();
+                if (userData?.isAdmin) { currentAdmin = userCredential.user; showDashboard(); loadOverview(); }
+                else { await auth.signOut(); errorMsg.textContent = 'ليس لديك صلاحية الدخول'; errorMsg.classList.remove('hidden'); }
+            } catch (error) { errorMsg.textContent = 'بيانات الدخول غير صحيحة'; errorMsg.classList.remove('hidden'); }
+        });
+
+        function showDashboard() { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('dashboard').classList.remove('hidden'); }
+
+        function showSection(section) {
+            document.querySelectorAll('.admin-section').forEach(s => s.classList.add('hidden'));
+            document.getElementById('section-' + section).classList.remove('hidden');
+            document.querySelectorAll('.nav-link').forEach(l => { l.classList.remove('bg-gray-700', 'text-white'); l.classList.add('text-gray-300'); });
+            document.querySelector(`[data-section="${section}"]`).classList.add('bg-gray-700', 'text-white');
+            document.querySelector(`[data-section="${section}"]`).classList.remove('text-gray-300');
+            if (section === 'users') loadUsers();
+            if (section === 'reports') loadReports();
+            if (section === 'verification') loadVerification();
+        }
+
+        async function loadOverview() {
+            const usersSnapshot = await database.ref('users').once('value');
+            const postsSnapshot = await database.ref('posts').once('value');
+            const reportsSnapshot = await database.ref('reports').orderByChild('status').equalTo('pending').once('value');
+            document.getElementById('totalUsers').textContent = usersSnapshot.numChildren();
+            document.getElementById('totalPosts').textContent = postsSnapshot.numChildren();
+            let pendingCount = 0;
+            reportsSnapshot.forEach(() => pendingCount++);
+            document.getElementById('pendingReports').textContent = pendingCount;
+            if (pendingCount > 0) { const badge = document.getElementById('reportsBadge'); badge.textContent = pendingCount; badge.classList.remove('hidden'); }
+        }
+
+        async function loadUsers() { const snapshot = await database.ref('users').once('value'); allUsers = []; snapshot.forEach((child) => allUsers.push({ id: child.key, ...child.val() })); renderUsers(allUsers); }
+
+        function renderUsers(users) {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = users.map(user => `<tr class="hover:bg-gray-700/50"><td class="px-6 py-4"><div class="flex items-center gap-3"><img src="${user.avatar || 'https://via.placeholder.com/40'}" class="w-10 h-10 rounded-full object-cover"><div><div class="flex items-center gap-1"><span class="font-medium text-white">${user.username}</span>${user.isVerified ? '<img src="https://cdn-icons-png.flaticon.com/128/10473/10473969.png" class="w-4 h-4">' : ''}</div></div></div></td><td class="px-6 py-4 text-center text-gray-400">${user.email || '-'}</td><td class="px-6 py-4 text-center text-gray-400">${user.postsCount || 0}</td><td class="px-6 py-4 text-center">${user.isBlocked ? '<span class="px-2 py-1 bg-red-500/20 text-red-400 rounded-full text-sm">محظور</span>' : '<span class="px-2 py-1 bg-green-500/20 text-green-400 rounded-full text-sm">نشط</span>'}</td><td class="px-6 py-4 text-center">${user.isBlocked ? `<button onclick="unbanUser('${user.id}')" class="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600">إلغاء الحظر</button>` : `<button onclick="banUser('${user.id}')" class="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600">حظر</button>`}<a href="view-profile.html?uid=${user.id}" class="px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-500 mr-2">عرض</a></td></tr>`).join('');
+        }
+
+        async function banUser(userId) { if (!confirm('هل أنت متأكد من حظر هذا المستخدم؟')) return; await database.ref('users/' + userId).update({ isBlocked: true }); loadUsers(); loadOverview(); }
+        async function unbanUser(userId) { await database.ref('users/' + userId).update({ isBlocked: false }); loadUsers(); loadOverview(); }
+
+        async function loadReports() { const snapshot = await database.ref('reports').orderByChild('createdAt').once('value'); const reports = []; snapshot.forEach((child) => reports.push({ id: child.key, ...child.val() })); reports.reverse(); renderReports(reports); }
+
+        async function renderReports(reports) {
+            const container = document.getElementById('reportsList');
+            if (reports.length === 0) { container.innerHTML = '<p class="text-gray-400 text-center py-8">لا توجد بلاغات</p>'; return; }
+            let html = '';
+            for (const report of reports) {
+                const reporterSnapshot = await database.ref('users/' + report.reporterId).once('value');
+                const reporter = reporterSnapshot.val();
+                const reportedSnapshot = await database.ref('users/' + report.reportedUserId).once('value');
+                const reported = reportedSnapshot.val();
+                html += `<div class="report-card bg-gray-800 rounded-xl p-6" data-status="${report.status}"><div class="flex items-start justify-between"><div class="flex-1"><div class="flex items-center gap-3 mb-4"><img src="${reporter?.avatar || 'https://via.placeholder.com/40'}" class="w-10 h-10 rounded-full object-cover"><div><p class="font-medium text-white">${reporter?.username || 'مستخدم'}</p><p class="text-xs text-gray-400">بلّغ عن</p></div><svg class="w-5 h-5 text-gray-500 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg><img src="${reported?.avatar || 'https://via.placeholder.com/40'}" class="w-10 h-10 rounded-full object-cover"><div><p class="font-medium text-white">${reported?.username || 'مستخدم'}</p><p class="text-xs text-gray-400">${reported?.email || ''}</p></div></div><div class="bg-gray-700/50 rounded-lg p-4"><p class="text-gray-300"><strong>السبب:</strong> ${report.reason}</p>${report.postId ? `<p class="text-gray-400 text-sm mt-2">منشور رقم: ${report.postId}</p>` : ''}</div>${report.status === 'pending' ? `<div class="flex gap-3 mt-4"><button onclick="handleReport('${report.id}', 'rejected')" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">تجاهل</button><button onclick="handleReport('${report.id}', 'resolved', '${report.reportedUserId}')" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">حظر</button></div>` : `<span class="inline-block mt-4 px-3 py-1 ${report.status === 'resolved' ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'} rounded-full text-sm">${report.status === 'resolved' ? 'تم الحظر' : 'تم التجاهل'}</span>`}</div></div></div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        async function handleReport(reportId, status, reportedUserId) { await database.ref('reports/' + reportId).update({ status }); if (status === 'resolved' && reportedUserId) await database.ref('users/' + reportedUserId).update({ isBlocked: true }); loadReports(); loadOverview(); }
+
+        async function loadVerification() { const snapshot = await database.ref('users').once('value'); allUsers = []; snapshot.forEach((child) => allUsers.push({ id: child.key, ...child.val() })); renderVerification(allUsers); }
+
+        function renderVerification(users) {
+            const container = document.getElementById('verificationList');
+            container.innerHTML = users.filter(u => !u.isAdmin).map(user => `<div class="bg-gray-800 rounded-xl p-6 flex items-center justify-between"><div class="flex items-center gap-4"><img src="${user.avatar || 'https://via.placeholder.com/40'}" class="w-14 h-14 rounded-full object-cover"><div><div class="flex items-center gap-2"><span class="font-bold text-white text-lg">${user.username}</span>${user.isVerified ? '<img src="https://cdn-icons-png.flaticon.com/128/10473/10473969.png" class="w-6 h-6">' : ''}</div><p class="text-gray-400">${user.email || ''}</p></div></div><div>${user.isVerified ? '<span class="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg">موثق</span>' : `<button onclick="verifyUser('${user.id}')" class="px-6 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 font-semibold">توثيق</button>`}</div></div>`).join('');
+        }
+
+        function searchUsers() { const query = document.getElementById('verifySearch').value.toLowerCase(); const filtered = allUsers.filter(u => u.username?.toLowerCase().includes(query)); renderVerification(filtered); }
+        async function verifyUser(userId) { await database.ref('users/' + userId).update({ isVerified: true }); loadVerification(); }
+        async function logout() { await auth.signOut(); document.getElementById('dashboard').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden'); }
+    </script>
+</body>
+</html>
